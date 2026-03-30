@@ -1,121 +1,162 @@
 import streamlit as st
 import metodos as mt
 
-st.title("📊 Métodos Numéricos")
+st.set_page_config(layout="centered")
 
-opcion = st.sidebar.selectbox(
-    "Seleccione un método",
-    ["Bisección", "Newton", "Secante", "Derivadas", "Trapecio", "Simpson"]
-)
+st.title("📊 Calculadora de Métodos Numéricos")
 
-# ---------------- BISECCIÓN ----------------
-if opcion == "Bisección":
-    st.header("Método de Bisección")
+# ------------------- SELECCIÓN POR BOTONES -------------------
+col1, col2 = st.columns(2)
 
-    ecuacion = st.text_input("Ecuación")
-    a = st.number_input("a")
-    b = st.number_input("b")
+with col1:
+    metodo = st.radio(
+        "📌 Métodos 1er Corte",
+        ["Bisección", "Newton", "Secante"]
+    )
+
+with col2:
+    metodo2 = st.radio(
+        "📌 Métodos 2do Corte",
+        ["Derivadas", "Trapecio", "Simpson"]
+    )
+
+# Elegir cuál usar
+opcion = metodo if metodo else metodo2
+
+
+# ------------------- FUNCIONES -------------------
+
+# --------- BISECCIÓN ---------
+if metodo == "Bisección":
+    st.subheader("🔵 Método de Bisección")
+
+    ecuacion = st.text_input("f(x)", placeholder="Ej: x^2 - 4")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        a = st.number_input("a")
+    with col2:
+        b = st.number_input("b")
+
     tol = st.number_input("Tolerancia", value=0.001)
 
     if st.button("Calcular"):
-        if ecuacion:
-            expresion, x = mt.preparar_ecuacion(ecuacion)
-            raiz, estado = mt.biseccion(expresion, x, a, b, tol)
+        expresion, x = mt.preparar_ecuacion(ecuacion)
+        raiz, estado = mt.biseccion(expresion, x, a, b, tol)
 
-            if raiz is not None:
-                st.success(f"Raíz: {raiz} | Iteraciones: {estado}")
-            else:
-                st.error("Intervalo inválido")
+        if raiz:
+            st.success(f"Raíz: {round(raiz,6)}")
+        else:
+            st.error("Intervalo inválido")
 
-# ---------------- NEWTON ----------------
-elif opcion == "Newton":
-    st.header("Método de Newton")
 
-    ecuacion = st.text_input("Ecuación")
+# --------- NEWTON ---------
+elif metodo == "Newton":
+    st.subheader("🟢 Método de Newton")
+
+    ecuacion = st.text_input("f(x)")
     x0 = st.number_input("Valor inicial")
     tol = st.number_input("Tolerancia", value=0.001)
 
     if st.button("Calcular"):
-        if ecuacion:
-            expresion, x = mt.preparar_ecuacion(ecuacion)
-            raiz, estado = mt.newton(expresion, x, x0, tol)
+        expresion, x = mt.preparar_ecuacion(ecuacion)
+        raiz, estado = mt.newton(expresion, x, x0, tol)
 
-            if raiz is not None:
-                st.success(f"Raíz: {raiz} | Iteraciones: {estado}")
-            else:
-                st.error("Error (derivada cero o no converge)")
+        if raiz:
+            st.success(f"Raíz: {round(raiz,6)}")
+        else:
+            st.error("Error en el método")
 
-# ---------------- SECANTE ----------------
-elif opcion == "Secante":
-    st.header("Método de la Secante")
 
-    ecuacion = st.text_input("Ecuación")
-    x0 = st.number_input("x0")
-    x1 = st.number_input("x1")
+# --------- SECANTE ---------
+elif metodo == "Secante":
+    st.subheader("🟡 Método de Secante")
+
+    ecuacion = st.text_input("f(x)")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        x0 = st.number_input("x0")
+    with col2:
+        x1 = st.number_input("x1")
+
     tol = st.number_input("Tolerancia", value=0.001)
 
     if st.button("Calcular"):
-        if ecuacion:
-            expresion, x = mt.preparar_ecuacion(ecuacion)
-            raiz, estado = mt.secante(expresion, x, x0, x1, tol)
+        expresion, x = mt.preparar_ecuacion(ecuacion)
+        raiz, estado = mt.secante(expresion, x, x0, x1, tol)
 
-            if raiz is not None:
-                st.success(f"Raíz: {raiz} | Iteraciones: {estado}")
-            else:
-                st.error("Error (división o no converge)")
+        if raiz:
+            st.success(f"Raíz: {round(raiz,6)}")
+        else:
+            st.error("Error en el método")
 
-# ---------------- DERIVADAS ----------------
-elif opcion == "Derivadas":
-    st.header("Método de 3 y 5 puntos")
 
-    texto_x = st.text_input("lista_x (separada por espacio)")
-    texto_fx = st.text_input("lista_fx (separada por espacio)")
+# ================== 2DO CORTE ==================
 
-    pos = st.number_input("Posición", step=1)
+# --------- DERIVADAS ---------
+elif metodo2 == "Derivadas":
+    st.subheader("📐 Método de Derivadas")
+
+    lista_x = st.data_editor(
+        {"x": [0,1,2], "f(x)": [0,0,0]},
+        num_rows="dynamic"
+    )
+
     tipo = st.selectbox("Tipo", ["central", "derecha", "izquierda", "cinco"])
 
+    x_eval = st.number_input("Valor de x donde evaluar")
+
     if st.button("Calcular"):
-        if texto_x and texto_fx:
-            lista_x = list(map(float, texto_x.split()))
-            lista_fx = list(map(float, texto_fx.split()))
+        x_vals = lista_x["x"].tolist()
+        fx_vals = lista_x["f(x)"].tolist()
 
-            resultado, estado = mt.puntos(lista_x, lista_fx, int(pos), tipo)
+        # 🔥 Convertir valor real → índice
+        if x_eval in x_vals:
+            pos = x_vals.index(x_eval)
+            resultado, estado = mt.puntos(x_vals, fx_vals, pos, tipo)
 
-            if resultado is not None:
+            if resultado:
                 st.success(f"Resultado: {resultado}")
             else:
-                st.error("Error en datos o posición")
+                st.error("No se puede calcular en esa posición")
+        else:
+            st.error("Ese valor de x no está en la tabla")
 
-# ---------------- TRAPECIO ----------------
-elif opcion == "Trapecio":
-    st.header("Método del Trapecio")
 
-    texto_x = st.text_input("lista_x")
-    texto_fx = st.text_input("lista_fx")
+# --------- TRAPECIO ---------
+elif metodo2 == "Trapecio":
+    st.subheader("📏 Método del Trapecio")
+
+    lista = st.data_editor(
+        {"x": [0,1,2], "f(x)": [0,0,0]},
+        num_rows="dynamic"
+    )
 
     if st.button("Calcular"):
-        if texto_x and texto_fx:
-            lista_x = list(map(float, texto_x.split()))
-            lista_fx = list(map(float, texto_fx.split()))
+        x_vals = lista["x"].tolist()
+        fx_vals = lista["f(x)"].tolist()
 
-            resultado = mt.trapecio_datos(lista_x, lista_fx)
+        resultado = mt.trapecio_datos(x_vals, fx_vals)
+        st.success(f"Área: {resultado}")
+
+
+# --------- SIMPSON ---------
+elif metodo2 == "Simpson":
+    st.subheader("📊 Método de Simpson")
+
+    lista = st.data_editor(
+        {"x": [0,1,2,3], "f(x)": [0,0,0,0]},
+        num_rows="dynamic"
+    )
+
+    if st.button("Calcular"):
+        x_vals = lista["x"].tolist()
+        fx_vals = lista["f(x)"].tolist()
+
+        resultado = mt.simpson_datos(x_vals, fx_vals)
+
+        if resultado:
             st.success(f"Área: {resultado}")
-
-# ---------------- SIMPSON ----------------
-elif opcion == "Simpson":
-    st.header("Método de Simpson")
-
-    texto_x = st.text_input("lista_x")
-    texto_fx = st.text_input("lista_fx")
-
-    if st.button("Calcular"):
-        if texto_x and texto_fx:
-            lista_x = list(map(float, texto_x.split()))
-            lista_fx = list(map(float, texto_fx.split()))
-
-            resultado = mt.simpson_datos(lista_x, lista_fx)
-
-            if resultado is not None:
-                st.success(f"Área: {resultado}")
-            else:
-                st.error("Error: intervalos deben ser pares")
+        else:
+            st.error("Intervalos deben ser pares")
