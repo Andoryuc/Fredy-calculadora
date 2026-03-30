@@ -1,9 +1,34 @@
 import streamlit as st
 import metodos as mt
+import streamlit.components.v1 as components
 
 st.set_page_config(page_title="Métodos Numéricos", layout="centered")
 
 st.title("🧮 Calculadora de Métodos Numéricos")
+
+# -------- FUNCIÓN PARA GEOgEBRA --------
+def limpiar_funcion(funcion):
+    funcion = funcion.replace("np.", "")
+    funcion = funcion.replace("**", "^")
+    return funcion
+
+def mostrar_geogebra(funcion, raiz=None):
+    funcion = limpiar_funcion(funcion)
+
+    punto = ""
+    if raiz is not None:
+        punto = f"A=({raiz},0)"
+
+    html = f"""
+    <iframe 
+        src="https://www.geogebra.org/classic?command=f(x)={funcion};{punto}" 
+        width="100%" 
+        height="500px" 
+        style="border:0;">
+    </iframe>
+    """
+
+    components.html(html, height=520)
 
 # ------------------ SELECCIÓN DE CORTE ------------------
 corte = st.radio(
@@ -14,22 +39,20 @@ corte = st.radio(
 
 st.divider()
 
-# ------------------ MÉTODOS 1ER CORTE ------------------
+# ================== 1ER CORTE ==================
 if corte == "1er Corte":
 
-    st.subheader("📌 Métodos de raíces")
-
     metodo = st.radio(
-        "Selecciona el método",
+        "Método",
         ["Bisección", "Newton", "Secante"],
         horizontal=True
     )
 
     st.divider()
 
-    # --------- BISECCIÓN ---------
+    # -------- BISECCIÓN --------
     if metodo == "Bisección":
-        st.markdown("### 🔵 Bisección")
+        st.subheader("🔵 Bisección")
 
         ecuacion = st.text_input("f(x)", placeholder="Ej: x^2 - 4")
 
@@ -41,37 +64,43 @@ if corte == "1er Corte":
 
         tol = st.number_input("Tolerancia", value=0.001)
 
-        if st.button("🟦 Calcular"):
+        if st.button("Calcular"):
             if ecuacion:
                 expresion, x = mt.preparar_ecuacion(ecuacion)
                 raiz, estado = mt.biseccion(expresion, x, a, b, tol)
 
                 if raiz is not None:
                     st.success(f"Raíz ≈ {round(raiz,6)}")
+
+                    st.subheader("📈 Gráfica")
+                    mostrar_geogebra(ecuacion, raiz)
                 else:
                     st.error("Intervalo inválido")
 
-    # --------- NEWTON ---------
+    # -------- NEWTON --------
     elif metodo == "Newton":
-        st.markdown("### 🟢 Newton")
+        st.subheader("🟢 Newton")
 
         ecuacion = st.text_input("f(x)")
         x0 = st.number_input("Valor inicial")
         tol = st.number_input("Tolerancia", value=0.001)
 
-        if st.button("🟩 Calcular"):
+        if st.button("Calcular"):
             if ecuacion:
                 expresion, x = mt.preparar_ecuacion(ecuacion)
                 raiz, estado = mt.newton(expresion, x, x0, tol)
 
                 if raiz is not None:
                     st.success(f"Raíz ≈ {round(raiz,6)}")
+
+                    st.subheader("📈 Gráfica")
+                    mostrar_geogebra(ecuacion, raiz)
                 else:
                     st.error("Error en el método")
 
-    # --------- SECANTE ---------
+    # -------- SECANTE --------
     elif metodo == "Secante":
-        st.markdown("### 🟡 Secante")
+        st.subheader("🟡 Secante")
 
         ecuacion = st.text_input("f(x)")
 
@@ -83,33 +112,34 @@ if corte == "1er Corte":
 
         tol = st.number_input("Tolerancia", value=0.001)
 
-        if st.button("🟨 Calcular"):
+        if st.button("Calcular"):
             if ecuacion:
                 expresion, x = mt.preparar_ecuacion(ecuacion)
                 raiz, estado = mt.secante(expresion, x, x0, x1, tol)
 
                 if raiz is not None:
                     st.success(f"Raíz ≈ {round(raiz,6)}")
+
+                    st.subheader("📈 Gráfica")
+                    mostrar_geogebra(ecuacion, raiz)
                 else:
                     st.error("Error en el método")
 
 
-# ------------------ MÉTODOS 2DO CORTE ------------------
+# ================== 2DO CORTE ==================
 elif corte == "2do Corte":
 
-    st.subheader("📌 Métodos con datos")
-
     metodo = st.radio(
-        "Selecciona el método",
+        "Método",
         ["Derivadas", "Trapecio", "Simpson"],
         horizontal=True
     )
 
     st.divider()
 
-    # --------- DERIVADAS ---------
+    # -------- DERIVADAS --------
     if metodo == "Derivadas":
-        st.markdown("### 📐 Derivadas (3 y 5 puntos)")
+        st.subheader("📐 Derivadas")
 
         tabla = st.data_editor(
             {"x": [0,1,2], "f(x)": [0,0,0]},
@@ -117,9 +147,9 @@ elif corte == "2do Corte":
         )
 
         tipo = st.selectbox("Tipo", ["central", "derecha", "izquierda", "cinco"])
-        x_eval = st.number_input("Valor de x donde evaluar")
+        x_eval = st.number_input("Valor de x")
 
-        if st.button("🟪 Calcular"):
+        if st.button("Calcular"):
             x_vals = tabla["x"].tolist()
             fx_vals = tabla["f(x)"].tolist()
 
@@ -130,36 +160,36 @@ elif corte == "2do Corte":
                 if resultado is not None:
                     st.success(f"Resultado ≈ {resultado}")
                 else:
-                    st.error("No se puede calcular en esa posición")
+                    st.error("No se puede calcular")
             else:
                 st.error("Ese valor no está en la tabla")
 
-    # --------- TRAPECIO ---------
+    # -------- TRAPECIO --------
     elif metodo == "Trapecio":
-        st.markdown("### 📏 Trapecio")
+        st.subheader("📏 Trapecio")
 
         tabla = st.data_editor(
             {"x": [0,1,2], "f(x)": [0,0,0]},
             num_rows="dynamic"
         )
 
-        if st.button("🟫 Calcular"):
+        if st.button("Calcular"):
             x_vals = tabla["x"].tolist()
             fx_vals = tabla["f(x)"].tolist()
 
             resultado = mt.trapecio_datos(x_vals, fx_vals)
             st.success(f"Área ≈ {resultado}")
 
-    # --------- SIMPSON ---------
+    # -------- SIMPSON --------
     elif metodo == "Simpson":
-        st.markdown("### 📊 Simpson")
+        st.subheader("📊 Simpson")
 
         tabla = st.data_editor(
             {"x": [0,1,2,3], "f(x)": [0,0,0,0]},
             num_rows="dynamic"
         )
 
-        if st.button("🟧 Calcular"):
+        if st.button("Calcular"):
             x_vals = tabla["x"].tolist()
             fx_vals = tabla["f(x)"].tolist()
 
