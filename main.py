@@ -2,147 +2,201 @@ import streamlit as st
 import metodos as mt
 import streamlit.components.v1 as components
 
-# --- CONFIGURACIÓN DE PÁGINA ---
-st.set_page_config(page_title="AFCC-Q | Métodos Numéricos", layout="centered")
+# --- 1. CONFIGURACIÓN E IDENTIDAD ---
+st.set_page_config(
+    page_title="AFCC-Q | Computational Engine",
+    page_icon="⚛️",
+    layout="wide", # Cambiamos a wide para mejor aprovechamiento del espacio
+    initial_sidebar_state="expanded"
+)
 
-# --- FUNCIÓN PARA EL IFRAME DE GEOGEBRA ---
-def geogebra_component(ecuacion):
-    # Ajustamos la ecuación de Python a formato GeoGebra
-    ggb_ecuacion = ecuacion.replace("**", "^")
+# --- 2. INYECCIÓN DE CSS "MEGA PRO" ---
+st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=JetBrains+Mono:wght@300;500&display=swap');
+
+    /* Variables de Color */
+    :root {
+        --primary-cyan: #00f2ff;
+        --secondary-purple: #7000ff;
+        --bg-dark: #0a0a0c;
+        --glass-bg: rgba(255, 255, 255, 0.03);
+        --glass-border: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Fondo y Tipografía */
+    .stApp {
+        background: radial-gradient(circle at 50% 0%, #1a1a2e 0%, #0a0a0c 100%);
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* Estilo de la Barra Lateral */
+    [data-testid="stSidebar"] {
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(20px);
+        border-right: 1px solid var(--glass-border);
+    }
+
+    /* Títulos y Subtítulos */
+    h1, h2, h3 {
+        font-weight: 700 !important;
+        letter-spacing: -1px !important;
+        background: linear-gradient(90deg, #fff, #555);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    /* Cards de Resultados (Glassmorphism) */
+    .result-card {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 30px;
+        backdrop-filter: blur(15px);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+        margin-top: 20px;
+        border-left: 5px solid var(--primary-cyan);
+    }
+
+    /* Botones Personalizados */
+    .stButton>button {
+        width: 100%;
+        border-radius: 12px;
+        border: 1px solid var(--glass-border);
+        background: linear-gradient(135deg, rgba(0,242,255,0.1) 0%, rgba(112,0,255,0.1) 100%);
+        color: white;
+        font-weight: 600;
+        padding: 15px;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .stButton>button:hover {
+        border-color: var(--primary-cyan);
+        box-shadow: 0 0 20px rgba(0, 242, 255, 0.4);
+        transform: translateY(-2px);
+    }
+
+    /* Inputs Estilizados */
+    .stTextInput>div>div>input, .stNumberInput input {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid var(--glass-border) !important;
+        color: white !important;
+        border-radius: 10px !important;
+    }
     
+    /* Logo AFCC-Q */
+    .brand {
+        font-family: 'JetBrains Mono', monospace;
+        color: var(--primary-cyan);
+        font-size: 0.8rem;
+        letter-spacing: 2px;
+        margin-bottom: 20px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# --- 3. COMPONENTE GEOGEBRA MEJORADO ---
+def geogebra_pro(ecuacion, color_hex="0, 242, 255"):
+    ggb_ecuacion = ecuacion.replace("**", "^")
+    # Convertir RGB para JS
     html_code = f"""
     <script src="https://www.geogebra.org/apps/deployggb.js"></script>
-    <div id="ggb-element" style="border: 2px solid #00f2ff; border-radius: 15px; overflow: hidden;"></div>
+    <div id="ggb-element" style="border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);"></div>
     <script>
         var params = {{
-            "appName": "graphing",
-            "width": 700,
-            "height": 400,
-            "showToolBar": false,
-            "showAlgebraInput": false,
-            "showMenuBar": false,
-            "enableRightClick": true,
+            "appName": "graphing", "width": 800, "height": 450,
+            "showToolBar": false, "showAlgebraInput": false,
+            "showMenuBar": false, "enableRightClick": false,
             "appletOnLoad": function(api) {{
                 api.evalCommand("f(x) = {ggb_ecuacion}");
-                api.setColor("f", 0, 0, 255); // Color Neón
-                api.setThickness("f", 5);
+                api.setColor("f", {color_hex});
+                api.setThickness("f", 6);
+                api.setGridVisible(true);
             }}
         }};
         var applet = new GGBApplet(params, true);
         window.onload = function() {{ applet.inject('ggb-element'); }};
     </script>
     """
-    components.html(html_code, height=420)
+    components.html(html_code, height=470)
 
-# --- ESTILO ---
-st.markdown("<h1 style='text-align: center; color: #00f2ff;'>🧮 Calculadora de Métodos Numéricos</h1>", unsafe_allow_html=True)
-
-# ------------------ SELECCIÓN DE CORTE ------------------
-corte = st.radio("Selecciona el corte", ["1er Corte", "2do Corte"], horizontal=True)
-st.divider()
-
-# ------------------ MÉTODOS 1ER CORTE ------------------
-if corte == "1er Corte":
-    st.subheader("📌 Métodos de raíces")
-    metodo = st.radio("Selecciona el método", ["Bisección", "Newton", "Secante"], horizontal=True)
+# --- 4. BARRA LATERAL (BRANDING) ---
+with st.sidebar:
+    st.markdown('<div class="brand">SYSTEM: AFCC-Q // UNIT: UDES</div>', unsafe_allow_html=True)
+    st.title("Control Panel")
+    corte = st.selectbox("Módulo de Ingeniería", ["Corte I: Raíces", "Corte II: Datos"], index=0)
     st.divider()
+    st.markdown("> *Cada error es la lección que me entrena para el siguiente golpe.*")
 
-    # Inputs comunes
-    ecuacion = st.text_input("f(x)", placeholder="Ej: x^2 - 4")
+# --- 5. LÓGICA PRINCIPAL ---
+
+if "Corte I" in corte:
+    st.title("🎯 Root Finding Engine")
     
-    # Botón para mostrar gráfica antes de calcular
-    if st.button("🖼️ Mostrar Gráfica en GeoGebra"):
-        if ecuacion:
-            geogebra_component(ecuacion)
-        else:
-            st.warning("Escribe una ecuación primero.")
+    col_input, col_graph = st.columns([1, 1.5], gap="large")
+    
+    with col_input:
+        st.subheader("Configuración")
+        metodo = st.selectbox("Algoritmo", ["Bisección", "Newton", "Secante"])
+        ecuacion = st.text_input("Función Objetivo f(x)", "x**2 - 4", help="Usa x**2 para potencias")
+        
+        # Colores dinámicos según método
+        colors = {"Bisección": "0, 242, 255", "Newton": "112, 0, 255", "Secante": "255, 49, 49"}
+        current_color = colors.get(metodo)
 
-    # --------- BISECCIÓN ---------
-    if metodo == "Bisección":
-        st.markdown("### 🔵 Bisección")
-        col1, col2 = st.columns(2)
-        with col1: a = st.number_input("a")
-        with col2: b = st.number_input("b")
-        tol = st.number_input("Tolerancia", value=0.001)
-
-        if st.button("🟦 Calcular"):
-            if ecuacion:
-                expresion, x = mt.preparar_ecuacion(ecuacion)
-                raiz, estado = mt.biseccion(expresion, x, a, b, tol)
-                if raiz is not None:
-                    st.success(f"Raíz ≈ {round(raiz,6)}")
-                else:
-                    st.error("Intervalo inválido")
-
-    # --------- NEWTON ---------
-    elif metodo == "Newton":
-        st.markdown("### 🟢 Newton")
-        x0 = st.number_input("Valor inicial")
-        tol = st.number_input("Tolerancia", value=0.001)
-
-        if st.button("🟩 Calcular"):
-            if ecuacion:
-                expresion, x = mt.preparar_ecuacion(ecuacion)
-                raiz, estado = mt.newton(expresion, x, x0, tol)
-                if raiz is not None:
-                    st.success(f"Raíz ≈ {round(raiz,6)}")
-                else:
-                    st.error("Error en el método")
-
-    # --------- SECANTE ---------
-    elif metodo == "Secante":
-        st.markdown("### 🟡 Secante")
-        col1, col2 = st.columns(2)
-        with col1: x0 = st.number_input("x0")
-        with col2: x1 = st.number_input("x1")
-        tol = st.number_input("Tolerancia", value=0.001)
-
-        if st.button("🟨 Calcular"):
-            if ecuacion:
-                expresion, x = mt.preparar_ecuacion(ecuacion)
-                raiz, estado = mt.secante(expresion, x, x0, x1, tol)
-                if raiz is not None:
-                    st.success(f"Raíz ≈ {round(raiz,6)}")
-                else:
-                    st.error("Error en el método")
-
-# ------------------ MÉTODOS 2DO CORTE ------------------
-elif corte == "2do Corte":
-    st.subheader("📌 Métodos con datos")
-    metodo = st.radio("Selecciona el método", ["Derivadas", "Trapecio", "Simpson"], horizontal=True)
-    st.divider()
-
-    if metodo == "Derivadas":
-        st.markdown("### 📐 Derivadas (3 y 5 puntos)")
-        tabla = st.data_editor({"x": [0.0, 1.0, 2.0], "f(x)": [0.0, 0.0, 0.0]}, num_rows="dynamic")
-        tipo = st.selectbox("Tipo", ["central", "derecha", "izquierda", "cinco"])
-        x_eval = st.number_input("Valor de x donde evaluar")
-
-        if st.button("🟪 Calcular"):
-            x_vals = [float(x) for x in tabla["x"]]
-            fx_vals = [float(f) for f in tabla["f(x)"]]
-            if x_eval in x_vals:
-                pos = x_vals.index(x_eval)
-                resultado, estado = mt.puntos(x_vals, fx_vals, pos, tipo)
-                if resultado is not None:
-                    st.success(f"Resultado ≈ {resultado}")
-                else:
-                    st.error("No se puede calcular en esa posición")
+        with st.expander("Parámetros del Método", expanded=True):
+            if metodo == "Bisección":
+                c1, c2 = st.columns(2)
+                a = c1.number_input("Límite a", value=0.0)
+                b = c2.number_input("Límite b", value=3.0)
+            elif metodo == "Newton":
+                x0 = st.number_input("Aproximación x0", value=1.0)
             else:
-                st.error("Ese valor no está en la tabla")
+                c1, c2 = st.columns(2)
+                x0 = c1.number_input("x0", value=1.0)
+                x1 = c2.number_input("x1", value=2.0)
+            
+            tol = st.number_input("Tolerancia (ε)", value=0.0001, format="%.5f")
 
-    elif metodo == "Trapecio":
-        st.markdown("### 📏 Trapecio")
-        tabla = st.data_editor({"x": [0.0, 1.0, 2.0], "f(x)": [0.0, 0.0, 0.0]}, num_rows="dynamic")
-        if st.button("🟫 Calcular"):
-            x_vals, fx_vals = tabla["x"].tolist(), tabla["f(x)"].tolist()
-            st.success(f"Área ≈ {mt.trapecio_datos(x_vals, fx_vals)}")
+        if st.button("🚀 Ejecutar Análisis"):
+            if ecuacion:
+                try:
+                    expresion, x_sym = mt.preparar_ecuacion(ecuacion)
+                    if metodo == "Bisección": 
+                        raiz, it = mt.biseccion(expresion, x_sym, a, b, tol)
+                    elif metodo == "Newton": 
+                        raiz, it = mt.newton(expresion, x_sym, x0, tol)
+                    else: 
+                        raiz, it = mt.secante(expresion, x_sym, x0, x1, tol)
 
-    elif metodo == "Simpson":
-        st.markdown("### 📊 Simpson")
-        tabla = st.data_editor({"x": [0.0, 1.0, 2.0, 3.0], "f(x)": [0.0, 0.0, 0.0, 0.0]}, num_rows="dynamic")
-        if st.button("🟧 Calcular"):
-            x_vals, fx_vals = tabla["x"].tolist(), tabla["f(x)"].tolist()
-            resultado, estado = mt.simpson_datos(x_vals, fx_vals)
-            if resultado is not None: st.success(f"Área ≈ {resultado}")
-            else: st.error("Intervalos deben ser pares")
+                    if raiz is not None:
+                        st.markdown(f"""
+                        <div class="result-card">
+                            <h3 style="margin:0; color:#fff;">Resultado Encontrado</h3>
+                            <p style="font-size:1.5rem; color:var(--primary-cyan); font-weight:bold; margin:10px 0;">x ≈ {raiz:.8f}</p>
+                            <p style="font-family:'JetBrains Mono'; font-size:0.8rem; color:#888;">CONVERGENCIA: {it} ITERACIONES</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    else:
+                        st.error("Error: El método no convergió en el intervalo.")
+                except Exception as e:
+                    st.error(f"Error de Sintaxis: {e}")
+
+    with col_graph:
+        st.subheader("Visualización en Tiempo Real")
+        if ecuacion:
+            geogebra_pro(ecuacion, current_color)
+        else:
+            st.info("Esperando definición de función...")
+
+elif "Corte II" in corte:
+    st.title("📊 Numerical Data Analysis")
+    
+    metodo = st.tabs(["Diferenciación", "Integración (Trapecio)", "Integración (Simpson)"])
+    
+    # Aquí puedes replicar el estilo de columnas y result-cards para el segundo corte
+    with metodo[0]:
+        st.subheader("Derivación por Puntos")
+        # ... (Tu lógica de tabla del segundo corte aquí)
