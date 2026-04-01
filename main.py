@@ -94,7 +94,7 @@ def draw_geogebra(ecuacion):
                 "showMenuBar": false,
                 "appletOnLoad": function(api) {{
                     api.evalCommand("f(x) = {formula}");
-                    api.setColor("f", 0, 242, 255);
+                    api.setColor("f", 0, 0, 255);
                     api.setThickness("f", 5);
                     api.setGridVisible(true);
                 }}
