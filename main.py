@@ -24,7 +24,7 @@ def geogebra_component(ecuacion):
             "enableRightClick": true,
             "appletOnLoad": function(api) {{
                 api.evalCommand("f(x) = {ggb_ecuacion}");
-                api.setColor("f", 0, 0, 0); // Color Neón
+                api.setColor("f", 255, 0, 0); // Color Neón
                 api.setThickness("f", 5);
             }}
         }};
