@@ -1,5 +1,3 @@
-streamlit
-plotly
 sympy
 numpy
-pandas
+streamlit
