@@ -28,7 +28,7 @@ def biseccion(expresion, x, a, b, tolerancia):
   if f_a * f_b >= 0:
     return None, 0
 
-  iteraciones = int(np.ceil(np.log2((b - a) / tolerancia)))
+  iteraciones = float(np.ceil(np.log2((b - a) / tolerancia)))
   
   for i in range(iteraciones):
     c = (a + b) / 2
