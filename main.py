@@ -136,7 +136,7 @@ if corte_actual == "PHASE 01: RAÍCES":
                 x0 = c1.number_input("X0", value=0.0)
                 x1 = c2.number_input("X1", value=1.0)
                 
-            tol = st.number_input("Tolerance", value=0.0001, format="%.6f")
+            tol = st.number_input("Tolerance", value=0.0000000000001, format="%.6f")
             
             if st.button("RUN CALCULATION"):
                 try:
