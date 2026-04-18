@@ -182,3 +182,29 @@ def simpson_datos(lista_x, lista_fx):
   resultado = (h / 3) * (lista_fx[0] + suma + lista_fx[-1])
 
   return resultado, -1
+
+#----------- METODO SIMPSON (POR ECUACION) ----------------
+
+def simpson_ecuacion(expresion, x, a, b, n):
+    # Validación: el número de intervalos (n) debe ser par
+    if n % 2 != 0:
+        return None, 1  # Retorna 1 como código de error
+
+    h = (b - a) / n
+    f_a = float(expresion.subs(x, a))
+    f_b = float(expresion.subs(x, b))
+
+    suma = f_a + f_b
+
+    for i in range(1, n):
+        x_i = a + i * h
+        f_xi = float(expresion.subs(x, x_i))
+        
+        if i % 2 == 0:
+            suma += 2 * f_xi
+        else:
+            suma += 4 * f_xi
+
+    resultado = (h / 3) * suma
+
+    return resultado, -1

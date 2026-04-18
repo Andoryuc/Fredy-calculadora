@@ -189,15 +189,52 @@ elif corte_actual == "PHASE 02: DATOS":
 
     with tab_int:
         st.markdown("### Area Integration")
-        df_int = st.data_editor(
-            {"x": [0.0, 1.0, 2.0], "f(x)": [0.0, 1.0, 4.0]},
-            num_rows="dynamic", key="int_edit"
-        )
-        c1, c2 = st.columns(2)
-        if c1.button("TRAPEZOIDAL RULE"):
-            res = mt.trapecio_datos(list(df_int["x"]), list(df_int["f(x)"]))
-            st.info(f"Área: {res:.6f}")
-        if c2.button("SIMPSON RULE"):
-            res, err = mt.simpson_datos(list(df_int["x"]), list(df_int["f(x)"]))
-            if res: st.info(f"Área: {res:.6f}")
-            else: st.error("Simpson requiere intervalos pares.")
+        
+        # Selector de modo de integración
+        modo_int = st.radio("Data Source:", ["Matrix Data (Trapecio/Simpson)", "Function Equation (Simpson)"], horizontal=True)
+        
+        if modo_int == "Matrix Data (Trapecio/Simpson)":
+            # --- MODO DATOS (El que ya tenías) ---
+            df_int = st.data_editor(
+                {"x": [0.0, 1.0, 2.0], "f(x)": [0.0, 1.0, 4.0]},
+                num_rows="dynamic", key="int_edit"
+            )
+            c1, c2 = st.columns(2)
+            if c1.button("TRAPEZOIDAL RULE"):
+                res = mt.trapecio_datos(list(df_int["x"]), list(df_int["f(x)"]))
+                st.markdown(f'<div class="result-box">Área (Trapecio): {res:.6f}</div>', unsafe_allow_html=True)
+                
+            if c2.button("SIMPSON RULE (DATOS)"):
+                res, err = mt.simpson_datos(list(df_int["x"]), list(df_int["f(x)"]))
+                if res is not None:
+                    st.markdown(f'<div class="result-box">Área (Simpson): {res:.6f}</div>', unsafe_allow_html=True)
+                else: 
+                    st.error("SYSTEM ERROR: Simpson requiere que el número de intervalos sea par.")
+                    
+        else:
+            # --- MODO ECUACIÓN (El Nuevo) ---
+            ecuacion_int = st.text_input("Función a integrar f(x):", "x**2 - 5*x + 1")
+            
+            c1, c2, c3 = st.columns(3)
+            a_int = c1.number_input("Límite inferior (A):", value=0.0)
+            b_int = c2.number_input("Límite superior (B):", value=2.0)
+            # Aseguramos que sea par usando un salto de 2 (step=2)
+            n_int = c3.number_input("Intervalos (n):", value=4, min_value=2, step=2) 
+            
+            if st.button("EXECUTE SIMPSON 1/3"):
+                try:
+                    # Usamos tu misma función de preparación para que todo sea compatible
+                    expr, var_x = mt.preparar_ecuacion(ecuacion_int)
+                    res, err = mt.simpson_ecuacion(expr, var_x, a_int, b_int, int(n_int))
+                    
+                    if res is not None:
+                        st.markdown(f"""
+                            <div class="result-box">
+                                <p style="color:#00f2ff; font-family:'Orbitron';">INTEGRAL DEFINIDA:</p>
+                                <h2 style="margin:0; color:#fff;">Área = {res:.6f}</h2>
+                            </div>
+                        """, unsafe_allow_html=True)
+                    else:
+                        st.error("SYSTEM ERROR: El número de intervalos (n) debe ser par.")
+                except Exception as e:
+                    st.error(f"Sintaxis inválida: {e}")
