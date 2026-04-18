@@ -191,7 +191,7 @@ elif corte_actual == "PHASE 02: DATOS":
         st.markdown("### Area Integration")
         
         # Selector de modo de integración
-        modo_int = st.radio("Data Source:", ["Matrix Data (Trapecio/Simpson)", "Function Equation (Simpson)"], horizontal=True)
+        modo_int = st.radio("Data Source:", ["Matrix Data (Trapecio/Simpson)", "Función ecuaccion (Simpson)"], horizontal=True)
         
         if modo_int == "Matrix Data (Trapecio/Simpson)":
             # --- MODO DATOS (El que ya tenías) ---
